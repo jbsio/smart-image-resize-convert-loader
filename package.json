@@ -1,0 +1,49 @@
+{
+  "name": "smart-image-resize-loader",
+  "version": "0.4.1",
+  "description": "Responsive image loader for webpack",
+  "author": {
+    "name": "Puppybits @puppybits, forked by Joshua Steiner",
+    "email": "me@jbs.io"
+  },
+  "keywords": [
+    "webpack image resize responsive adaptive"
+  ],
+  "scripts": {
+    "test": "DEBUG=resize-image-loader webpack --config test/webpack.config.js"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://www.opensource.org/licenses/mit-license.php"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:LevelMoney/resize-image-loader.git"
+  },
+  "dependencies": {
+    "datauri": "^0.7.1",
+    "debug": "^2.2.0",
+    "file-loader": "^0.8.4",
+    "loader-utils": "^0.2.6"
+  },
+  "peerDependencies": {
+    "gm": "*",
+    "file-loader": "*"
+  },
+  "devDependencies": {
+    "webpack": "^1.7.3"
+  },
+  "readme": "# resize-image-loader\n\n**Upgade notice!** The output from v0.3.x to v0.4.x has changed. See below for details.\n\n**Images account for 58%<sup>[1][image-stats]</sup> of web pages. Hyper optimize your images to have massive improvement page load times.**\n\nResize-image-loader will create responsive images using webpack and [gm](http://aheckmann.github.io/gm/) so only the most effecient image is downloaded for the user's device. Modern browser have an additional attibute on the `img` tag called `srcset`. If `srcset` is supported the browser will use the device's screensize and pixel density to determine the best image to download. Older browsers will default back to the normal `src` image.  This will greatly improve page load times and time to first render while reducing the cost for the user<sup>[2][cost-site]</sup>.\n\n## Sample Metrics\nCheck out the test folder for a sample use case. Below is the render times with the full image vs a responsive one and a placeholder image.\n\n\n| image size | time to render on 3G connection |\n| ------------- | ------------- |\n| placeholder image (inlined & blurred) | 300 ms |\n| 900 px width image (resized & optimized srcset) | 5,000 ms |\n| regular image | 24,000 ms |\n\n\n## Basic Usage\n\n[Documentation: Using loaders](http://webpack.github.io/docs/using-loaders.html)\n\nUse the sizes param of the resize-image-loader to set all the desired widths. The loader creates the various sized images and return the proper formated result for the `<img srcset>` property (including any file name changes for long term caching). This loader need to be set in the javascript source, not the webpack config file.\n\n``` javascript\nvar responsive = require('resize-image?sizes[]=200w,sizes[]=900w!./myImage.jpg');\nvar img = require('./myImage.jpg')\n...\nrender(){\n  return <img\n    srcset={responsive.srcset}\n    src={img}\n    sizes=\"200w,900w\" /> {/* Make sure to add the sizes manually as well. */}\n}\n\n```\n\n## Advanced Usage\n\nOptionally you make also create a placeholder image. Placeholder images are tiny images that are inlined and blurred until the hi-res image is loaded. This delivers a fully rendered experince to the user as quick as possible without empty boxes or jumpy reflow/layouts. [See facebook's write up for futher details.](https://code.facebook.com/posts/991252547593574/the-technology-behind-preview-photos)\n\nThe code below has one `img` using the placeholder image, which is inlined as a datauri. This will load right away and take up minimal space on the inital download (the sample project placeholder is 1.5K gzipped). The second image is the normal image. The user's browser will then choose the optimal image and download that one instead of the src. Once the full image loads, the onLoad handler will trigger a state change and have an animated cross fade between the blured placeholder image and the real hi-res image.\n\n``` javascript\nvar responsive = require('resize-image?sizes[]=200w,sizes[]=900w&placeholder=20&blur=40!./myImage.jpg');\nvar img = require('./myImage.jpg')\n...\nrender(){\n  return (<div style={{position:'relative'}}>\n    <img\n      src={responsive.placeholder}\n      style={{\n        opacity:(this.state.imgLoaded ? 0 : 1),\n        transition: 'opacity 300ms ease-out',\n        position:'absolute'}} />\n    <img\n      src={img}\n      srcset={responsive.srcset}\n      sizes=\"200w,900w\"\n      style={{\n        opacity:(this.state.imgLoaded ? 1 : 0),\n        transition: 'opacity 300ms ease-in',\n        position:'absolute'}}\n      onLoad={function(){ this.setState({imgLoaded:true}); }} />\n  </div>);\n}\n```\n\n*placeholder* options.  \n\n`placeholder=<image-width>` default _20_  \n`blur=<gaussian-blur-amount>` default _40_  \n\n* To also compress images combine [resize-image-loader](https://github.com/Levelmoney/resize-image-loader) with the [image-webpack-loader](https://github.com/tcoopman/image-webpack-loader)\n```\nvar responsive = require('image-webpack!resize-image?sizes[]=200w,sizes[]=900w!./myImage.jpg');\nvar img = require('image-webpack!./myImage.jpg')\n```\n\n\n## Installation\n\n* Install ImageMagick before installing the resize-image-loader\n\n```sh\n$ brew install ImageMagick // for mac\n$ npm install resize-image-loader --save-dev\n```\n\n\n## License\n\nMIT (http://www.opensource.org/licenses/mit-license.php)\n\n[image-stats]: http://royal.pingdom.com/2011/11/21/web-pages-getting-bloated-here-is-why/\n[cost-site]: http://whatdoesmysitecost.com/\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/LevelMoney/resize-image-loader/issues"
+  },
+  "homepage": "https://github.com/LevelMoney/resize-image-loader",
+  "_id": "smart-image-resize-loader@0.4.1",
+  "_shasum": "f67050fa8e69dcaaa8653280ca11a45ce3e85fcb",
+  "_resolved": "git://github.com/jbsio/smart-image-resize-loader#a5cb777f7d9aced7a8df781f05b8dfd22ccfd08b",
+  "_from": "git://github.com/jbsio/smart-image-resize-loader",
+  "_fromGithub": true
+}
