@@ -116,7 +116,6 @@ function createResponsiveImages(content, sizes, exts, name, emitFile, resourcePa
         }.bind({ext: ext, size: size, index: (si * exts.length) + ei})));
       })
     });
-    var statPromises = [];
     Promise.all(gmPromises)
       .then(function (results) {
         var filtered = results.filter(function (e) {
@@ -156,8 +155,8 @@ function createResponsiveImages(content, sizes, exts, name, emitFile, resourcePa
 
 
         var imgset = flat.map(function (info, i) {
-          return info.fileName + ' ' + info.displaySize;
-        }).join('w, ') + 'w';
+            return info.fileName + ' ' + info.displaySize;
+          }).join('w, ') + 'w';
 
         next(imgset);
       })
@@ -245,3 +244,4 @@ module.exports = function (content) {
 };
 
 module.exports.raw = true; // get buffer stream instead of utf8 string
+
