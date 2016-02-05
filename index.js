@@ -17,6 +17,7 @@ var Datauri = require('datauri');
 var fs = require('fs');
 var path = require('path');
 var loaderUtils = require('loader-utils');
+var exec = require('child_process').exec;
 
 var defaultSizes = ['320w', '960w', '2048w'];
 var defaultBlur = 40;
@@ -145,7 +146,7 @@ function createResponsiveImages(content, sizes, exts, name, emitFile, resourcePa
           if (sorted.hasOwnProperty(key2)) {
             var val2 = sorted[key2];
             for (var key3 in val2) {
-              if(val2.hasOwnProperty(key3)) {
+              if (val2.hasOwnProperty(key3)) {
                 var val3 = val2[key3];
                 flat.push({fileName: val3.fileName, displaySize: val3.displaySize});
               }
@@ -167,6 +168,7 @@ function createResponsiveImages(content, sizes, exts, name, emitFile, resourcePa
 }
 
 module.exports = function (content) {
+  var self = this;
   var idx = this.loaderIndex;
   var resourcePath = this.options.output.path;
   // ignore content from previous loader because it could be datauri
@@ -189,57 +191,78 @@ module.exports = function (content) {
     // Bypass processing while on watch mode
     return callback(null, content);
   } else {
-
     var paths = this.resourcePath.split('/');
     var file = paths[paths.length - 1];
     var name = file.slice(0, file.lastIndexOf('.'));
     var ext = file.slice(file.lastIndexOf('.') + 1, file.length);
-    var sizes = query.sizes.map(function (s) {
-      return s;
-    });
-    var emitFile = this.emitFile;
-
-    var task1 = null,
-      task2 = null;
-    if (query.placeholder) {
-      query.placeholder = parseInt(query.placeholder) || defaultPlaceholderSize;
-      query.blur = query.blur || defaultBlur;
-
-      task1 = createPlaceholder(content, query.placeholder, ext, query.blur, name);
-    }
-
-    if (sizes.length >= 1) {
-      if (!task1) {
-        task1 = createResponsiveImages(content, sizes, extensions, name, emitFile, resourcePath);
-      } else {
-        task2 = createResponsiveImages(content, sizes, extensions, name, emitFile, resourcePath);
-      }
-    }
-
-    queue.push((function (t1, t2, callback) {
-      return function (next) {
-        if (t2) {
-          t2(function (result) {
-            t1(function (result2) {
-              Object.keys(result2).map(function (key) {
-                result[key] = result2[key];
-              });
-              debug(JSON.stringify(result, undefined, 1));
-              callback(null, "module.exports = '" + result + "'");
-              next();
-            });
+    if (ext == 'webp' || query.formats.indexOf('webp') !== -1) {
+      var hasError = false;
+      var child = exec('convert --version', function (error, stdout) {
+        var lines = stdout.split('\n')
+          .filter(function (line) {
+            return !!line;
           });
-          return;
+        var lastLine = lines[lines.length - 1];
+        if (lastLine.indexOf('webp') === -1) {
+          hasError = true;
+          self.emitError('Can\'t convert to/from WebP without ImageMagick support!  Please install ImageMagick with WebP support.');
+          return callback(null, content);
         }
+        if (!hasError) {
+          handlePostCheck();
+        }
+      })
+    } else {
+      handlePostCheck();
+    }
+    function handlePostCheck() {
+      var sizes = query.sizes.map(function (s) {
+        return s;
+      });
+      var emitFile = this.emitFile;
+
+      var task1 = null,
+        task2 = null;
+      if (query.placeholder) {
+        query.placeholder = parseInt(query.placeholder) || defaultPlaceholderSize;
+        query.blur = query.blur || defaultBlur;
+
+        task1 = createPlaceholder(content, query.placeholder, ext, query.blur, name);
+      }
+
+      if (sizes.length >= 1) {
+        if (!task1) {
+          task1 = createResponsiveImages(content, sizes, extensions, name, emitFile, resourcePath);
+        } else {
+          task2 = createResponsiveImages(content, sizes, extensions, name, emitFile, resourcePath);
+        }
+      }
+
+      queue.push((function (t1, t2, callback) {
+        return function (next) {
+          if (t2) {
+            t2(function (result) {
+              t1(function (result2) {
+                Object.keys(result2).map(function (key) {
+                  result[key] = result2[key];
+                });
+                debug(JSON.stringify(result, undefined, 1));
+                callback(null, "module.exports = '" + result + "'");
+                next();
+              });
+            });
+            return;
+          }
 
 
-        t1(function (result) {
-          debug(JSON.stringify(result, undefined, 1));
-          callback(null, "module.exports = '" + result + "'");
-          next();
-        });
-      };
-    }(task1, task2, callback)));
+          t1(function (result) {
+            debug(JSON.stringify(result, undefined, 1));
+            callback(null, "module.exports = '" + result + "'");
+            next();
+          });
+        };
+      }(task1, task2, callback)));
+    }.bind(this);
   }
 };
 
