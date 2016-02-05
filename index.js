@@ -168,6 +168,7 @@ function createResponsiveImages(content, sizes, exts, name, emitFile, resourcePa
 }
 
 module.exports = function (content) {
+  var handlePostCheck;
   var self = this;
   var idx = this.loaderIndex;
   var resourcePath = this.options.output.path;
@@ -215,7 +216,7 @@ module.exports = function (content) {
     } else {
       handlePostCheck();
     }
-    function handlePostCheck() {
+    handlePostCheck = function handlePostCheck() {
       var sizes = query.sizes.map(function (s) {
         return s;
       });

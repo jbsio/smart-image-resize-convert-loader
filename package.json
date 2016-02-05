@@ -1,6 +1,6 @@
 {
   "name": "smart-image-resize-convert-loader",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Responsive image loader for webpack",
   "author": {
     "name": "Puppybits @puppybits, forked by Joshua Steiner",
